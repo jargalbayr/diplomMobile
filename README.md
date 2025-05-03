@@ -1,77 +1,77 @@
-# Face Style AI - Mobile App
+# Face Style AI
 
-A mobile application that suggests personalized hairstyles using AI based on the user's face shape.
+A mobile app that analyzes users' face shapes and recommends personalized hairstyles using AI. Built with React Native and Expo.
 
 ## Features
 
-- Capture photo using device camera or select from gallery
-- AI-powered face shape detection using TensorFlow.js
+- Face shape detection and analysis
 - Personalized hairstyle recommendations based on face shape
-- Privacy-safe image processing (all processing done on device)
+- AI-generated hairstyle images with DALL-E 3
+- Local image storage for uploaded and generated images
+- User authentication and account management
+- Saved hairstyles library
+- Mongolian language support
 
-## Tech Stack
-
-- React Native with Expo
-- TypeScript
-- TensorFlow.js for face detection and analysis
-- OpenAI API for personalized hairstyle suggestions
-- Expo Camera and Image Picker
-
-## Setup Instructions
+## Setup
 
 ### Prerequisites
 
-- Node.js (v16 or newer)
-- Yarn or npm
-- Expo CLI (`npm install -g expo-cli`)
-- iOS Simulator or Android Emulator (optional)
-- [Expo Go](https://expo.dev/client) app on your physical device (optional)
+- Node.js (LTS version recommended)
+- npm or yarn
+- Expo CLI
+- An OpenAI API key for AI features
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd diplommobile
+1. Clone the repository
+   ```
+   git clone https://github.com/jargalbayr/diplomMobile.git
+   cd diplomMobile
    ```
 
-2. Install dependencies:
-   ```bash
-   yarn install
-   # or
+2. Install dependencies
+   ```
    npm install
    ```
 
-3. Create a `.env` file in the root directory based on `.env.example`:
+3. Create a local `.env` file in the project root with your OpenAI API key:
    ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   APP_ENV=development
-   ```
-
-4. Start the development server:
-   ```bash
-   yarn start
-   # or
-   npm start
+   OPENAI_API_KEY=your_api_key_here
    ```
 
-5. Follow the instructions in the terminal to open the app on your device or emulator.
+4. Update the API key in `config/env.ts` for development:
+   ```typescript
+   dev: {
+     OPENAI_API_KEY: 'your_api_key_here', // Add for local development
+     API_URL: 'localhost',
+     PORT: '3000',
+   },
+   ```
+   
+   > ⚠️ **IMPORTANT**: Never commit your API keys to GitHub. The `.env` file and the API keys in `config/env.ts` should be added to `.gitignore`.
 
-## Usage
+### Running the App
 
-1. Open the app
-2. Choose either "Take Photo" or "Upload Photo"
-3. Center your face in the camera view or select a photo showing your face clearly
-4. Wait for the AI to analyze your face shape
-5. View your personalized hairstyle recommendations
+Start the development server:
+```
+npx expo start
+```
 
-## Privacy
+## Security Notes
 
-The app processes all images locally on your device. When using the OpenAI API:
-- Images are sent securely to OpenAI's servers
-- Images are not stored permanently and are deleted after processing
-- No personal identification information is shared
+This project uses environment variables for sensitive data like API keys. When sharing or pushing this code:
 
-## License
+1. Always use environment variables for API keys
+2. Keep `.env` files in `.gitignore`
+3. Don't hardcode API keys in any files that will be committed
+4. For production, use secure environment variable management
+5. If you need to share API keys with team members, use a secure method
 
-MIT
+## Technology Stack
+
+- React Native
+- Expo
+- TypeScript
+- OpenAI API (GPT-4o and DALL-E 3)
+- SQLite for local database
+- Expo FileSystem for image storage

@@ -63,8 +63,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "OPENAI_API_KEY": "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",
-      "APP_ENV": "${process.env.APP_ENV || 'development'}"
+      "env": "${process.env.NODE_ENV || 'dev'}"
     }
   }
 }

@@ -1,27 +1,32 @@
 import Constants from 'expo-constants';
 
-// Get environment variables from Expo's manifest
-const getEnvironmentVariable = (name: string): string | undefined => {
-  if (
-    Constants.expoConfig &&
-    Constants.expoConfig.extra &&
-    Constants.expoConfig.extra[name]
-  ) {
-    return Constants.expoConfig.extra[name] as string;
+// Load environment variables 
+// In production, these should come from environment variables or a secure source
+// For development, you can set them here temporarily but don't commit API keys
+const ENV = {
+  dev: {
+    OPENAI_API_KEY: '', // Add your API key during development but never commit it
+    API_URL: 'localhost',
+    PORT: '3000',
+  },
+  prod: {
+    OPENAI_API_KEY: '', // Should be loaded from a secure source in production
+    API_URL: 'api.yourdomain.com',
+    PORT: '443',
   }
-  return undefined;
 };
 
-export const ENV = {
-  // OpenAI API key for generating hairstyle suggestions
-  OPENAI_API_KEY: getEnvironmentVariable('OPENAI_API_KEY'),
-  
-  // Environment (development, production)
-  APP_ENV: getEnvironmentVariable('APP_ENV') || 'development',
-  
-  // App configuration
-  DEBUG_MODE: getEnvironmentVariable('APP_ENV') === 'development',
+// Determine the environment
+const getEnvVars = () => {
+  const env = Constants.expoConfig?.extra?.env || process.env.NODE_ENV || 'dev';
+  console.log(`[ENV] Loading environment: ${env}`);
+  if (env === 'prod') {
+    return ENV.prod;
+  }
+  return ENV.dev;
 };
+
+export default getEnvVars();
 
 // Validate required environment variables
 export const validateEnv = (): boolean => {

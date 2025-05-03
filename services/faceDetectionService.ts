@@ -1,4 +1,5 @@
 import axios from 'axios';
+import ENV from '../config/env';
 
 export type FaceShape = 'oval' | 'round' | 'square' | 'heart' | 'diamond' | 'rectangular' | 'oblong';
 
@@ -88,8 +89,8 @@ export async function getHairstyleSuggestions(
   console.log('[DEBUG] Image base64 length:', imageBase64.length);
 
   try {
-    // Get OpenAI API key
-    const OPENAI_API_KEY = "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";
+    // Get OpenAI API key from environment variables
+    const OPENAI_API_KEY = ENV.OPENAI_API_KEY;
     
     console.log('[DEBUG] API Key available:', !!OPENAI_API_KEY);
     console.log('[DEBUG] API Key first 10 chars:', OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 10) + '...' : 'None');
