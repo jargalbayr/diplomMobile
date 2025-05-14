@@ -1,7 +1,20 @@
+import { ModernColors } from '@/constants/Colors';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    Platform,
+    SafeAreaView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 export default function FaceAnalysisScreen() {
   const { mode } = useLocalSearchParams();
@@ -25,7 +38,39 @@ export default function FaceAnalysisScreen() {
       });
 
       if (!result.canceled) {
-        setImage(result.assets[0].uri);
+        const selectedImage = result.assets[0];
+        
+        // For Android, make sure we have a reliable file path by copying to app's cache directory
+        if (Platform.OS === 'android') {
+          try {
+            const fileName = `face_image_${new Date().getTime()}.jpg`;
+            const destUri = `${FileSystem.cacheDirectory}${fileName}`;
+            
+            console.log(`[DEBUG] Copying image from ${selectedImage.uri} to ${destUri}`);
+            
+            // Copy the file to cache directory
+            await FileSystem.copyAsync({
+              from: selectedImage.uri,
+              to: destUri
+            });
+            
+            // Verify the file exists
+            const fileInfo = await FileSystem.getInfoAsync(destUri);
+            if (fileInfo.exists) {
+              console.log('[DEBUG] Image copied successfully to:', destUri);
+              setImage(destUri);
+            } else {
+              console.error('[DEBUG] Failed to copy image to cache');
+              setImage(selectedImage.uri); // Fallback to original URI
+            }
+          } catch (err) {
+            console.error('[DEBUG] Error copying image file:', err);
+            setImage(selectedImage.uri); // Fallback to original URI
+          }
+        } else {
+          // iOS should work fine with the original URI
+          setImage(selectedImage.uri);
+        }
       } else {
         router.back();
       }
@@ -41,8 +86,11 @@ export default function FaceAnalysisScreen() {
     
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Verify the image exists before proceeding
+      const fileInfo = await FileSystem.getInfoAsync(image);
+      if (!fileInfo.exists) {
+        throw new Error('Image file not found');
+      }
       
       // Navigate to results
       router.push({
@@ -50,22 +98,32 @@ export default function FaceAnalysisScreen() {
         params: { imageUri: image }
       });
     } catch (error) {
-      Alert.alert('Error', 'Failed to analyze image. Please try again.');
-      console.error(error);
+      console.error('[DEBUG] Error analyzing image:', error);
+      Alert.alert('Error', 'Failed to process image. Please try another photo.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Face Analysis</Text>
+      </View>
+      
       <View style={styles.imagePreviewContainer}>
         {image ? (
           <>
-            <Image 
-              source={{ uri: image }} 
-              style={styles.imagePreview} 
-            />
+            <View style={styles.imageFrame}>
+              <Image 
+                source={{ uri: image }} 
+                style={styles.imagePreview} 
+              />
+            </View>
+            <Text style={styles.helperText}>
+              Make sure your face is clearly visible in the image
+            </Text>
             <View style={styles.actionButtons}>
               <TouchableOpacity 
                 style={[styles.button, styles.secondaryButton]} 
@@ -84,7 +142,7 @@ export default function FaceAnalysisScreen() {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={ModernColors.text.inverse} />
                 ) : (
                   <Text style={styles.buttonText}>
                     Analyze Face
@@ -95,63 +153,110 @@ export default function FaceAnalysisScreen() {
           </>
         ) : (
           <View style={styles.emptyStateContainer}>
-            <ActivityIndicator size="large" color="#5048E5" />
-            <Text style={styles.loadingText}>Loading image picker...</Text>
+            <View style={styles.loadingIconContainer}>
+              <ActivityIndicator size="large" color={ModernColors.primary} />
+            </View>
+            <Text style={styles.loadingText}>Зураг ачаалж байна...</Text>
           </View>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: ModernColors.background.primary,
+  },
+  header: {
+    padding: 24,
+    paddingBottom: 12,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: ModernColors.text.primary,
   },
   imagePreviewContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
+  },
+  imageFrame: {
+    width: 320,
+    height: 320,
+    borderRadius: 20,
+    padding: 4,
+    backgroundColor: ModernColors.background.primary,
+    shadowColor: 'rgba(0,0,0,0.1)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 4,
+    marginBottom: 24,
   },
   imagePreview: {
-    width: 300,
-    height: 300,
-    borderRadius: 15,
-    marginBottom: 20,
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+  },
+  helperText: {
+    fontSize: 16,
+    color: ModernColors.text.secondary,
+    textAlign: 'center',
+    marginBottom: 36,
+    maxWidth: '80%',
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     width: '100%',
+    gap: 16,
   },
   button: {
-    backgroundColor: '#5048E5',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginHorizontal: 10,
+    backgroundColor: ModernColors.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    minWidth: 140,
+    alignItems: 'center',
+    shadowColor: ModernColors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#5048E5',
+    backgroundColor: ModernColors.background.primary,
+    borderWidth: 1.5,
+    borderColor: ModernColors.primary,
+    shadowColor: 'transparent',
   },
   buttonText: {
-    color: '#fff',
+    color: ModernColors.text.inverse,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   secondaryButtonText: {
-    color: '#5048E5',
+    color: ModernColors.primary,
   },
   emptyStateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  loadingIconContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: ModernColors.background.tertiary,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
   loadingText: {
-    color: '#5048E5',
-    marginTop: 10,
+    color: ModernColors.text.secondary,
+    fontSize: 16,
   },
 }); 

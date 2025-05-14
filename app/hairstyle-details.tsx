@@ -1,7 +1,19 @@
+import { ModernColors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 // Define a type for hairstyles
 type Hairstyle = {
@@ -118,89 +130,101 @@ export default function HairstyleDetailsScreen() {
     return (
       <View style={styles.loadingContainer}>
         <Stack.Screen options={{ title: 'Loading...' }} />
-        <Text>Loading hairstyle details...</Text>
+        <ActivityIndicator size="large" color={ModernColors.primary} />
+        <Text style={styles.loadingText}>Loading hairstyle details...</Text>
       </View>
     );
   }
   
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Stack.Screen 
         options={{ 
           title: hairstyle.name,
           headerRight: () => (
             <TouchableOpacity onPress={shareHairstyle} style={styles.headerButton}>
-              <Ionicons name="share-outline" size={24} color="#333" />
+              <Ionicons name="share-outline" size={24} color={ModernColors.text.secondary} />
             </TouchableOpacity>
           )
         }} 
       />
       
-      <Image
-        source={{ uri: hairstyle.imageUrl }}
-        style={styles.image}
-      />
-      
-      <View style={styles.content}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>{hairstyle.name}</Text>
-          <TouchableOpacity onPress={toggleSave}>
-            <Ionicons 
-              name={isSaved ? "heart" : "heart-outline"} 
-              size={28} 
-              color={isSaved ? "#FF3B30" : "#333"} 
-            />
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={{ uri: hairstyle.imageUrl }}
+            style={styles.image}
+          />
+        </View>
+        
+        <View style={styles.content}>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{hairstyle.name}</Text>
+            <TouchableOpacity 
+              onPress={toggleSave}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons 
+                name={isSaved ? "heart" : "heart-outline"} 
+                size={28} 
+                color={isSaved ? ModernColors.error : ModernColors.text.secondary} 
+              />
+            </TouchableOpacity>
+          </View>
+          
+          <Text style={styles.faceShape}>Best for {hairstyle.faceShape} face shape</Text>
+          
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Difficulty</Text>
+              <Text style={styles.statValue}>{hairstyle.difficulty}</Text>
+            </View>
+            <View style={[styles.statItem, styles.statItemBorder]}>
+              <Text style={styles.statLabel}>Maintenance</Text>
+              <Text style={styles.statValue}>{hairstyle.maintenance}</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Hair Type</Text>
+              <Text style={styles.statValue}>{hairstyle.idealHairType}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.description}>{hairstyle.longDescription}</Text>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Stylist Recommendation</Text>
+            <View style={styles.stylistCard}>
+              <Ionicons name="person-circle-outline" size={32} color={ModernColors.primary} />
+              <View style={styles.stylistInfo}>
+                <Text style={styles.stylistName}>{hairstyle.stylist}</Text>
+                <Text style={styles.salonName}>{hairstyle.salon}</Text>
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tags</Text>
+            <View style={styles.tagsContainer}>
+              {hairstyle.tags.map((tag, index) => (
+                <View key={index} style={styles.tag}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.findStylistButton}
+            onPress={() => Alert.alert('Find Stylist', 'This would connect you with a hairstylist who specializes in this style.')}
+          >
+            <Text style={styles.findStylistButtonText}>Find a Stylist</Text>
           </TouchableOpacity>
         </View>
-        
-        <Text style={styles.faceShape}>Best for {hairstyle.faceShape} face shape</Text>
-        
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Difficulty</Text>
-            <Text style={styles.statValue}>{hairstyle.difficulty}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Maintenance</Text>
-            <Text style={styles.statValue}>{hairstyle.maintenance}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Hair Type</Text>
-            <Text style={styles.statValue}>{hairstyle.idealHairType}</Text>
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.description}>{hairstyle.longDescription}</Text>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Stylist Recommendation</Text>
-          <Text style={styles.stylistInfo}>
-            Recommended by {hairstyle.stylist} from {hairstyle.salon}
-          </Text>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tags</Text>
-          <View style={styles.tagsContainer}>
-            {hairstyle.tags.map((tag, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.findStylistButton}
-          onPress={() => Alert.alert('Find Stylist', 'This would connect you with a hairstylist who specializes in this style.')}
-        >
-          <Text style={styles.findStylistButtonText}>Find a Stylist</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -209,22 +233,36 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: ModernColors.background.primary,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: ModernColors.background.primary,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: ModernColors.text.secondary,
   },
   headerButton: {
-    padding: 8,
+    padding: 10,
+  },
+  imageContainer: {
+    width: width,
+    height: width * 0.8,
+    backgroundColor: ModernColors.background.tertiary,
   },
   image: {
     width: width,
-    height: width * 0.75,
+    height: width * 0.8,
   },
   content: {
-    padding: 20,
+    padding: 24,
   },
   titleRow: {
     flexDirection: 'row',
@@ -233,89 +271,117 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: ModernColors.text.primary,
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   faceShape: {
     fontSize: 16,
-    color: '#5048E5',
-    marginBottom: 20,
+    color: ModernColors.primary,
+    marginBottom: 24,
+    fontWeight: '500',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    backgroundColor: ModernColors.background.highlight,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 28,
+    shadowColor: 'rgba(0,0,0,0.05)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
     elevation: 2,
   },
   statItem: {
     alignItems: 'center',
     flex: 1,
   },
+  statItemBorder: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: ModernColors.border.light,
+  },
   statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 5,
+    fontSize: 13,
+    color: ModernColors.text.tertiary,
+    marginBottom: 6,
   },
   statValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 15,
+    fontWeight: '600',
+    color: ModernColors.text.primary,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 28,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+    fontSize: 20,
+    fontWeight: '700',
+    color: ModernColors.text.primary,
+    marginBottom: 12,
   },
   description: {
     fontSize: 16,
-    lineHeight: 24,
-    color: '#666',
+    lineHeight: 26,
+    color: ModernColors.text.secondary,
+  },
+  stylistCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: ModernColors.background.tertiary,
+    padding: 16,
+    borderRadius: 12,
   },
   stylistInfo: {
+    marginLeft: 16,
+  },
+  stylistName: {
     fontSize: 16,
-    color: '#666',
+    fontWeight: '600',
+    color: ModernColors.text.primary,
+    marginBottom: 4,
+  },
+  salonName: {
+    fontSize: 14,
+    color: ModernColors.text.secondary,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
   tag: {
-    backgroundColor: '#EEF1FF',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: ModernColors.background.highlight,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: 10,
+    marginBottom: 10,
   },
   tagText: {
     fontSize: 14,
-    color: '#5048E5',
+    color: ModernColors.primary,
+    fontWeight: '500',
   },
   findStylistButton: {
-    backgroundColor: '#5048E5',
-    paddingVertical: 15,
-    borderRadius: 10,
+    backgroundColor: ModernColors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 40,
+    shadowColor: ModernColors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   findStylistButtonText: {
-    color: '#fff',
+    color: ModernColors.text.inverse,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 }); 

@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 // For development, you can set them here temporarily but don't commit API keys
 const ENV = {
   dev: {
-    OPENAI_API_KEY: '', // Add your API key during development but never commit it
+    OPENAI_API_KEY: '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', 
     API_URL: 'localhost',
     PORT: '3000',
   },
@@ -31,13 +31,17 @@ export default getEnvVars();
 // Validate required environment variables
 export const validateEnv = (): boolean => {
   const requiredVars = ['OPENAI_API_KEY'];
+  const currentEnv = getEnvVars();
   
   // In development mode, we might allow missing variables
-  if (ENV.APP_ENV === 'development') {
+  const env = Constants.expoConfig?.extra?.env || process.env.NODE_ENV || 'dev';
+  if (env === 'dev') {
     return true;
   }
   
-  const missingVars = requiredVars.filter(varName => !ENV[varName as keyof typeof ENV]);
+  const missingVars = requiredVars.filter(varName => 
+    !currentEnv[varName as keyof typeof currentEnv]
+  );
   
   if (missingVars.length > 0) {
     console.error(

@@ -1,3 +1,4 @@
+import { ModernColors } from '@/constants/Colors';
 import { isAuthenticated, login, register } from '@/services/authService';
 import { initDatabase, initMockData } from '@/services/databaseService';
 import { useRouter } from 'expo-router';
@@ -9,6 +10,7 @@ import {
     Image,
     KeyboardAvoidingView,
     Platform,
+    SafeAreaView,
     StyleSheet,
     Text,
     TextInput,
@@ -110,145 +112,159 @@ export default function LoginScreen() {
   if (initializing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#5048E5" />
+        <ActivityIndicator size="large" color={ModernColors.primary} />
         <Text style={styles.loadingText}>Initializing app...</Text>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      
-      <View style={styles.header}>
-        <Image 
-          source={require('@/assets/images/icon.png')} 
-          style={styles.logo}
-        />
-        <Text style={styles.appTitle}>Face Style AI</Text>
-        <Text style={styles.appSubtitle}>
-          Your personal hairstyle recommendation assistant
-        </Text>
-      </View>
-      
-      <View style={styles.formContainer}>
-        <Text style={styles.formTitle}>
-          {isLogin ? 'Sign In' : 'Create Account'}
-        </Text>
-        
-        {!isLogin && (
-          <TextInput
-            style={styles.input}
-            placeholder="Your name"
-            value={name}
-            onChangeText={setName}
-            autoCapitalize="words"
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.header}>
+          <Image 
+            source={require('@/assets/images/icon.png')} 
+            style={styles.logo}
           />
-        )}
+          <Text style={styles.appTitle}>Үсний загвар AI</Text>
+          <Text style={styles.appSubtitle}>
+            Танд тохирсон үсний засалт өгөх хувийн туслах
+          </Text>
+        </View>
         
-        <TextInput
-          style={styles.input}
-          placeholder="Email address"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-        />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-        />
-        
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={handleAuth}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>
-              {isLogin ? 'Sign In' : 'Create Account'}
-            </Text>
+        <View style={styles.formContainer}>
+          <Text style={styles.formTitle}>
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </Text>
+          
+          {!isLogin && (
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Your name"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                placeholderTextColor={ModernColors.text.tertiary}
+              />
+            </View>
           )}
-        </TouchableOpacity>
+          
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email address"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              placeholderTextColor={ModernColors.text.tertiary}
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              placeholderTextColor={ModernColors.text.tertiary}
+            />
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.primaryButton}
+            onPress={handleAuth}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={ModernColors.text.inverse} />
+            ) : (
+              <Text style={styles.primaryButtonText}>
+                {isLogin ? 'Sign In' : 'Create Account'}
+              </Text>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.switchButton}
+            onPress={() => setIsLogin(!isLogin)}
+          >
+            <Text style={styles.switchText}>
+              {isLogin 
+                ? "Don't have an account? Sign Up" 
+                : "Already have an account? Sign In"}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.demoButton}
+            onPress={handleDemoLogin}
+          >
+            <Text style={styles.demoButtonText}>
+              Try Demo Account
+            </Text>
+          </TouchableOpacity>
+        </View>
         
-        <TouchableOpacity 
-          style={styles.switchButton}
-          onPress={() => setIsLogin(!isLogin)}
-        >
-          <Text style={styles.switchText}>
-            {isLogin 
-              ? "Don't have an account? Sign Up" 
-              : "Already have an account? Sign In"}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            © {new Date().getFullYear()} Face Style AI
           </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.demoButton}
-          onPress={handleDemoLogin}
-        >
-          <Text style={styles.demoButtonText}>
-            Try Demo Account
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          © {new Date().getFullYear()} Face Style AI
-        </Text>
-      </View>
-    </KeyboardAvoidingView>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: ModernColors.background.primary,
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: ModernColors.background.primary,
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: ModernColors.text.secondary,
   },
   header: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 40,
     marginBottom: 40,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 16,
+    width: 120,
+    height: 120,
+    marginBottom: 20,
   },
   appTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: ModernColors.text.primary,
+    marginBottom: 12,
   },
   appSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: ModernColors.text.secondary,
     marginHorizontal: 40,
     textAlign: 'center',
+    lineHeight: 24,
   },
   formContainer: {
     paddingHorizontal: 30,
@@ -256,60 +272,68 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 24,
+    color: ModernColors.text.primary,
+    marginBottom: 32,
     textAlign: 'center',
   },
+  inputContainer: {
+    marginBottom: 20,
+    borderRadius: 12,
+    backgroundColor: ModernColors.background.tertiary,
+    overflow: 'hidden',
+  },
   input: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+    padding: 18,
     fontSize: 16,
+    color: ModernColors.text.primary,
   },
-  button: {
-    backgroundColor: '#5048E5',
-    paddingVertical: 16,
-    borderRadius: 8,
+  primaryButton: {
+    backgroundColor: ModernColors.primary,
+    paddingVertical: 18,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    shadowColor: ModernColors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  buttonText: {
-    color: 'white',
+  primaryButtonText: {
+    color: ModernColors.text.inverse,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   switchButton: {
     alignItems: 'center',
-    padding: 8,
+    padding: 12,
   },
   switchText: {
     fontSize: 16,
-    color: '#5048E5',
+    color: ModernColors.primary,
+    fontWeight: '500',
   },
   demoButton: {
-    marginTop: 16,
+    marginTop: 20,
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#5048E5',
+    borderWidth: 1.5,
+    borderColor: ModernColors.primary,
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
   },
   demoButtonText: {
-    color: '#5048E5',
+    color: ModernColors.primary,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   footer: {
-    padding: 16,
+    padding: 20,
     alignItems: 'center',
     marginTop: 'auto',
   },
   footerText: {
     fontSize: 14,
-    color: '#999',
+    color: ModernColors.text.tertiary,
   },
 });

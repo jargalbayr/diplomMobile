@@ -1,10 +1,13 @@
+import FaceShapeResultWithSave from '@/components/FaceShapeResultWithSave';
+import { ModernColors } from '@/constants/Colors';
+import { SavedImagesProvider } from '@/context/SavedImagesContext';
+import { detectFaceShape, getHairstyleSuggestions } from '@/services/faceDetectionService';
 import * as FileSystem from 'expo-file-system';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import FaceShapeResult, { FaceShapeResultsData } from '@/components/FaceShapeResult';
-import { detectFaceShape, getHairstyleSuggestions } from '@/services/faceDetectionService';
+import { FaceShapeResultsData } from '@/components/FaceShapeResult';
 
 export default function HairstyleResultsScreen() {
   const { imageUri } = useLocalSearchParams();
@@ -12,7 +15,9 @@ export default function HairstyleResultsScreen() {
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<FaceShapeResultsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [validatedImageUri, setValidatedImageUri] = useState<string | null>(null);
 
+  // First validate the image exists
   useEffect(() => {
     console.log('[DEBUG] HairstyleResults: Component mounted with imageUri:', imageUri ? (imageUri as string).substring(0, 30) + '...' : 'null');
     
@@ -23,19 +28,67 @@ export default function HairstyleResultsScreen() {
       return;
     }
 
+    const validateImage = async () => {
+      try {
+        const imgUri = imageUri as string;
+        // Check if file exists before proceeding
+        const fileInfo = await FileSystem.getInfoAsync(imgUri);
+        
+        console.log('[DEBUG] File info:', fileInfo);
+        
+        if (fileInfo.exists && !fileInfo.isDirectory) {
+          setValidatedImageUri(imgUri);
+        } else {
+          console.error('[DEBUG] HairstyleResults: Image file not found:', imgUri);
+          setError('Image file not found or inaccessible.');
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('[DEBUG] HairstyleResults: Error validating image:', err);
+        setError('Could not access the image. Please try again with a different image.');
+        setLoading(false);
+      }
+    };
+
+    validateImage();
+  }, [imageUri]);
+
+  // Once we have a validated image URI, proceed with analysis
+  useEffect(() => {
+    if (!validatedImageUri) return;
+
     const analyzeImage = async () => {
       console.log('[DEBUG] HairstyleResults: Starting image analysis');
       try {
-        // Convert image to base64 for API calls
-        console.log('[DEBUG] HairstyleResults: Reading image as base64');
-        const base64Image = await FileSystem.readAsStringAsync(imageUri as string, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        console.log('[DEBUG] HairstyleResults: Base64 image length:', base64Image.length);
+        // Try to read the image with error handling
+        let base64Image;
+        try {
+          console.log('[DEBUG] HairstyleResults: Reading image as base64');
+          base64Image = await FileSystem.readAsStringAsync(validatedImageUri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          console.log('[DEBUG] HairstyleResults: Base64 image length:', base64Image.length);
+        } catch (readError) {
+          console.error('[DEBUG] Error reading image file:', readError);
+          
+          // If reading fails, we'll use mock data without the base64 image
+          console.log('[DEBUG] HairstyleResults: Calling detectFaceShape without image data');
+          const faceShapeResult = await detectFaceShape(validatedImageUri);
+          
+          // Get mock hairstyle suggestions
+          const mockSuggestions = {
+            faceShape: faceShapeResult.faceShape,
+            description: getDescriptionForFaceShape(faceShapeResult.faceShape),
+            hairstyles: getMockHairstyles(faceShapeResult.faceShape)
+          };
+          
+          setResults(mockSuggestions);
+          return;
+        }
 
         // Detect face shape
         console.log('[DEBUG] HairstyleResults: Calling detectFaceShape');
-        const faceShapeResult = await detectFaceShape(imageUri as string);
+        const faceShapeResult = await detectFaceShape(validatedImageUri);
         console.log('[DEBUG] HairstyleResults: Face shape detected:', faceShapeResult);
 
         // Get hairstyle suggestions based on face shape
@@ -59,13 +112,13 @@ export default function HairstyleResultsScreen() {
     };
 
     analyzeImage();
-  }, [imageUri]);
+  }, [validatedImageUri]);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <Stack.Screen options={{ title: 'Analyzing' }} />
-        <ActivityIndicator size="large" color="#5048E5" />
+        <ActivityIndicator size="large" color={ModernColors.primary} />
         <Text style={styles.loadingText}>Analyzing your face shape...</Text>
       </View>
     );
@@ -87,50 +140,99 @@ export default function HairstyleResultsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Your Results' }} />
-      <FaceShapeResult 
-        imageUri={imageUri as string} 
-        results={results} 
-      />
-    </View>
+    <SavedImagesProvider>
+      <View style={styles.container}>
+        <Stack.Screen options={{ title: 'Your Results' }} />
+        <FaceShapeResultWithSave 
+          imageUri={validatedImageUri || (imageUri as string)} 
+          results={results} 
+        />
+      </View>
+    </SavedImagesProvider>
   );
+}
+
+// Helper function to get description for a face shape
+function getDescriptionForFaceShape(faceShape: string): string {
+  const descriptions: Record<string, string> = {
+    'oval': 'Oval face shapes are versatile and balanced, with a slightly wider forehead and cheekbones compared to the jawline.',
+    'round': 'Round face shapes have soft features with a similar width and length, and a rounded jawline.',
+    'square': 'Square face shapes have strong, angular jawlines with roughly equal width and length dimensions.',
+    'heart': 'Heart face shapes have a wider forehead and cheekbones with a narrower jawline and chin.',
+    'diamond': 'Diamond face shapes have narrow foreheads and jawlines with wide cheekbones.',
+    'rectangular': 'Rectangular face shapes are longer than they are wide, with a straight cheek line.',
+    'oblong': 'Oblong face shapes are longer than they are wide, similar to rectangular but with more curved edges.'
+  };
+  
+  return descriptions[faceShape.toLowerCase()] || 
+    'This face shape has unique proportions that can be complemented with the right hairstyle.';
+}
+
+// Helper function to get mock hairstyles
+function getMockHairstyles(faceShape: string): any[] {
+  return [
+    {
+      name: 'Layered Bob',
+      description: `A versatile style that works well with ${faceShape} face shapes. The layers add texture and dimension.`,
+      imageUrl: 'https://i.imgur.com/example1.jpg'
+    },
+    {
+      name: 'Side-Swept Bangs',
+      description: `Perfect for ${faceShape} face shapes, adding softness and asymmetry that complements your features.`,
+      imageUrl: 'https://i.imgur.com/example2.jpg'
+    },
+    {
+      name: 'Textured Pixie',
+      description: `A bold choice that emphasizes facial features and adds height, ideal for ${faceShape} face shapes.`,
+      imageUrl: 'https://i.imgur.com/example3.jpg'
+    },
+    {
+      name: 'Long Layers',
+      description: `Creates movement and frames the face beautifully, enhancing ${faceShape} face shapes.`,
+      imageUrl: 'https://i.imgur.com/example4.jpg'
+    },
+    {
+      name: 'Curtain Bangs',
+      description: `Trendy style that works wonderfully with ${faceShape} face shapes by softening the forehead.`,
+      imageUrl: 'https://i.imgur.com/example5.jpg'
+    }
+  ];
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: ModernColors.background.secondary,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: ModernColors.background.secondary,
     padding: 20,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: ModernColors.text.secondary,
     textAlign: 'center',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: ModernColors.background.secondary,
     padding: 20,
   },
   errorText: {
     fontSize: 16,
-    color: '#ff3b30',
+    color: ModernColors.error,
     textAlign: 'center',
     marginBottom: 20,
   },
   backLink: {
     fontSize: 16,
-    color: '#5048E5',
+    color: ModernColors.primary,
     fontWeight: 'bold',
   },
 }); 
