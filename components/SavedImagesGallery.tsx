@@ -25,7 +25,7 @@ export default function SavedImagesGallery({ onImagePress }: SavedImagesGalleryP
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={ModernColors.primary} />
-        <Text style={styles.loadingText}>Loading saved images...</Text>
+        <Text style={styles.loadingText}>Хадгалсан зургуудыг ачааллаж байна...</Text>
       </View>
     );
   }
@@ -36,15 +36,15 @@ export default function SavedImagesGallery({ onImagePress }: SavedImagesGalleryP
         <View style={styles.emptyIconContainer}>
           <Ionicons name="images-outline" size={70} color={ModernColors.text.tertiary} />
         </View>
-        <Text style={styles.emptyTitle}>No saved images</Text>
+        <Text style={styles.emptyTitle}>Хадгалсан зураг байхгүй байна</Text>
         <Text style={styles.emptySubtitle}>
-          Your face analysis images and AI suggestions will appear here.
+          Таны хадгалсан нүүрний дүн шинжилгээ болон AI-н санал болгосон үсний загварууд энд харагдах болно.
         </Text>
         <TouchableOpacity 
           style={styles.analyzeButton}
           onPress={() => router.push("/")}
         >
-          <Text style={styles.analyzeButtonText}>Analyze Your Face</Text>
+          <Text style={styles.analyzeButtonText}>Нүүрээ шинжлүүлэх</Text>
         </TouchableOpacity>
       </View>
     );
@@ -80,7 +80,7 @@ export default function SavedImagesGallery({ onImagePress }: SavedImagesGalleryP
         <View style={styles.suggestionCountContainer}>
           <Ionicons name="cut-outline" size={16} color={ModernColors.text.secondary} />
           <Text style={styles.suggestionCountText}>
-            {item.suggestions?.length || 0} Suggestions
+            {item.suggestions?.length || 0} санал
           </Text>
         </View>
 

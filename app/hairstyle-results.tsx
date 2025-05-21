@@ -1,7 +1,7 @@
 import FaceShapeResultWithSave from '@/components/FaceShapeResultWithSave';
 import { ModernColors } from '@/constants/Colors';
 import { SavedImagesProvider } from '@/context/SavedImagesContext';
-import { detectFaceShape, getHairstyleSuggestions } from '@/services/faceDetectionService';
+import { detectFaceShape, getDirectHairstyleSuggestions, getHairstyleSuggestions } from '@/services/faceDetectionService';
 import * as FileSystem from 'expo-file-system';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -10,20 +10,22 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { FaceShapeResultsData } from '@/components/FaceShapeResult';
 
 export default function HairstyleResultsScreen() {
-  const { imageUri } = useLocalSearchParams();
+  const { imageUri, directGptAnalysis } = useLocalSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<FaceShapeResultsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [validatedImageUri, setValidatedImageUri] = useState<string | null>(null);
+  const [analysisStep, setAnalysisStep] = useState<string>('Анализ бэлтгэж байна...');
 
   // First validate the image exists
   useEffect(() => {
     console.log('[DEBUG] HairstyleResults: Component mounted with imageUri:', imageUri ? (imageUri as string).substring(0, 30) + '...' : 'null');
+    console.log('[DEBUG] Direct GPT Analysis enabled:', directGptAnalysis === 'true');
     
     if (!imageUri) {
       console.error('[DEBUG] HairstyleResults: No image provided');
-      setError('No image provided.');
+      setError('Зураг өгөөгүй байна.');
       setLoading(false);
       return;
     }
@@ -40,18 +42,18 @@ export default function HairstyleResultsScreen() {
           setValidatedImageUri(imgUri);
         } else {
           console.error('[DEBUG] HairstyleResults: Image file not found:', imgUri);
-          setError('Image file not found or inaccessible.');
+          setError('Зураг олдсонгүй эсвэл хандах боломжгүй байна.');
           setLoading(false);
         }
       } catch (err) {
         console.error('[DEBUG] HairstyleResults: Error validating image:', err);
-        setError('Could not access the image. Please try again with a different image.');
+        setError('Зурагт хандаж чадсангүй. Өөр зураг ашиглан дахин оролдоно уу.');
         setLoading(false);
       }
     };
 
     validateImage();
-  }, [imageUri]);
+  }, [imageUri, directGptAnalysis]);
 
   // Once we have a validated image URI, proceed with analysis
   useEffect(() => {
@@ -64,6 +66,7 @@ export default function HairstyleResultsScreen() {
         let base64Image;
         try {
           console.log('[DEBUG] HairstyleResults: Reading image as base64');
+          setAnalysisStep('Зураг уншиж байна...');
           base64Image = await FileSystem.readAsStringAsync(validatedImageUri, {
             encoding: FileSystem.EncodingType.Base64,
           });
@@ -86,21 +89,36 @@ export default function HairstyleResultsScreen() {
           return;
         }
 
-        // Detect face shape
-        console.log('[DEBUG] HairstyleResults: Calling detectFaceShape');
-        const faceShapeResult = await detectFaceShape(validatedImageUri);
-        console.log('[DEBUG] HairstyleResults: Face shape detected:', faceShapeResult);
+        if (directGptAnalysis === 'true') {
+          // Use direct GPT-4o analysis without face shape detection
+          setAnalysisStep('AI-аар таны төрхийг шинжилж байна...');
+          console.log('[DEBUG] HairstyleResults: Using direct GPT-4o analysis');
+          
+          const hairstyleSuggestions = await getDirectHairstyleSuggestions(base64Image);
+          console.log('[DEBUG] HairstyleResults: Got direct hairstyle suggestions:', 
+            hairstyleSuggestions ? `${hairstyleSuggestions.hairstyles?.length} hairstyles suggested` : 'null');
+            
+          setResults(hairstyleSuggestions);
+        } else {
+          // Traditional flow: Detect face shape first, then get hairstyle suggestions
+          setAnalysisStep('Нүүрний хэлбэрийг илрүүлж байна...');
+          console.log('[DEBUG] HairstyleResults: Calling detectFaceShape');
+          const faceShapeResult = await detectFaceShape(validatedImageUri);
+          console.log('[DEBUG] HairstyleResults: Face shape detected:', faceShapeResult);
 
-        // Get hairstyle suggestions based on face shape
-        console.log('[DEBUG] HairstyleResults: Calling getHairstyleSuggestions');
-        const hairstyleSuggestions = await getHairstyleSuggestions(
-          faceShapeResult.faceShape,
-          base64Image
-        );
-        console.log('[DEBUG] HairstyleResults: Got hairstyle suggestions:', 
-          hairstyleSuggestions ? `${hairstyleSuggestions.hairstyles?.length} hairstyles for ${hairstyleSuggestions.faceShape}` : 'null');
+          // Get hairstyle suggestions based on face shape
+          setAnalysisStep('Үсний загварын санал бэлтгэж байна...');
+          console.log('[DEBUG] HairstyleResults: Calling getHairstyleSuggestions');
+          const hairstyleSuggestions = await getHairstyleSuggestions(
+            faceShapeResult.faceShape,
+            base64Image
+          );
+          console.log('[DEBUG] HairstyleResults: Got hairstyle suggestions:', 
+            hairstyleSuggestions ? `${hairstyleSuggestions.hairstyles?.length} hairstyles for ${hairstyleSuggestions.faceShape}` : 'null');
 
-        setResults(hairstyleSuggestions);
+          setResults(hairstyleSuggestions);
+        }
+        
         console.log('[DEBUG] HairstyleResults: Results set successfully');
       } catch (err) {
         console.error('[DEBUG] HairstyleResults: Error analyzing image:', err);
@@ -112,14 +130,14 @@ export default function HairstyleResultsScreen() {
     };
 
     analyzeImage();
-  }, [validatedImageUri]);
+  }, [validatedImageUri, directGptAnalysis]);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Stack.Screen options={{ title: 'Analyzing' }} />
+        <Stack.Screen options={{ title: 'Анализ хийж байна' }} />
         <ActivityIndicator size="large" color={ModernColors.primary} />
-        <Text style={styles.loadingText}>Analyzing your face shape...</Text>
+        <Text style={styles.loadingText}>{analysisStep}</Text>
       </View>
     );
   }
@@ -127,13 +145,13 @@ export default function HairstyleResultsScreen() {
   if (error || !results) {
     return (
       <View style={styles.errorContainer}>
-        <Stack.Screen options={{ title: 'Error' }} />
-        <Text style={styles.errorText}>{error || 'Unknown error occurred'}</Text>
+        <Stack.Screen options={{ title: 'Алдаа' }} />
+        <Text style={styles.errorText}>{error || 'Тодорхойгүй алдаа гарлаа'}</Text>
         <Text 
           style={styles.backLink}
           onPress={() => router.back()}
         >
-          Try Again
+          Дахин оролдох
         </Text>
       </View>
     );
@@ -142,7 +160,7 @@ export default function HairstyleResultsScreen() {
   return (
     <SavedImagesProvider>
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Your Results' }} />
+        <Stack.Screen options={{ title: 'Таны үр дүн' }} />
         <FaceShapeResultWithSave 
           imageUri={validatedImageUri || (imageUri as string)} 
           results={results} 

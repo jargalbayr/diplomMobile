@@ -16,27 +16,27 @@ export default function ProfileScreen() {
   
   // Mock user data - in a real app, this would come from authentication/database
   const userData = {
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: "Бат Болд",
+    email: "bat.bold@example.com",
     imageUrl: "https://i.pravatar.cc/300",
-    createdAt: "January 2023"
+    createdAt: "2023 оны 1-р сар"
   };
 
   const menuItems: MenuItem[] = [
-    { title: "Edit Profile", icon: "person-outline", action: () => console.log("Edit profile") },
-    { title: "Appearance", icon: "color-palette-outline", action: () => console.log("Appearance settings") },
-    { title: "Notifications", icon: "notifications-outline", action: () => console.log("Notification settings") },
-    { title: "Privacy", icon: "lock-closed-outline", action: () => console.log("Privacy settings") },
-    { title: "Help & Support", icon: "help-circle-outline", action: () => console.log("Help & Support") },
-    { title: "About", icon: "information-circle-outline", action: () => console.log("About app") },
-    { title: "Log Out", icon: "log-out-outline", action: () => router.push("/login"), color: ModernColors.error }
+    { title: "Профайл засах", icon: "person-outline", action: () => console.log("Edit profile") },
+    { title: "Харагдах байдал", icon: "color-palette-outline", action: () => console.log("Appearance settings") },
+    { title: "Мэдэгдлүүд", icon: "notifications-outline", action: () => console.log("Notification settings") },
+    { title: "Нууцлал", icon: "lock-closed-outline", action: () => console.log("Privacy settings") },
+    { title: "Тусламж", icon: "help-circle-outline", action: () => console.log("Help & Support") },
+    { title: "Аппликейшны тухай", icon: "information-circle-outline", action: () => console.log("About app") },
+    { title: "Гарах", icon: "log-out-outline", action: () => router.push("/login"), color: ModernColors.error }
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>Профайл</Text>
         </View>
         
         <View style={styles.profileSection}>
@@ -48,7 +48,7 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.userName}>{userData.name}</Text>
           <Text style={styles.userEmail}>{userData.email}</Text>
-          <Text style={styles.userSince}>Member since {userData.createdAt}</Text>
+          <Text style={styles.userSince}>Бүртгүүлсэн огноо: {userData.createdAt}</Text>
         </View>
         
         <View style={styles.menuSection}>
@@ -81,7 +81,7 @@ export default function ProfileScreen() {
         </View>
         
         <View style={styles.footer}>
-          <Text style={styles.version}>Version 1.0.0</Text>
+          <Text style={styles.version}>Хувилбар 1.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

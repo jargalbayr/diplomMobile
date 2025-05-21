@@ -42,7 +42,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Нүүр',
           tabBarIcon: ({ color, focused }) => 
             <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />,
         }}
@@ -50,7 +50,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
+          title: 'Хайх',
           tabBarIcon: ({ color, focused }) => 
             <Ionicons name={focused ? "compass" : "compass-outline"} size={24} color={color} />,
         }}
@@ -58,7 +58,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="saved"
         options={{
-          title: 'Saved',
+          title: 'Хадгалсан',
           tabBarIcon: ({ color, focused }) => 
             <Ionicons name={focused ? "heart" : "heart-outline"} size={24} color={color} />,
         }}
@@ -66,7 +66,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Профайл',
           tabBarIcon: ({ color, focused }) => 
             <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />,
         }}

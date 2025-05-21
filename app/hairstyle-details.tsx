@@ -3,16 +3,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 // Define a type for hairstyles
@@ -116,22 +116,22 @@ export default function HairstyleDetailsScreen() {
     setIsSaved(!isSaved);
     // In a real app, this would update a database or local storage
     Alert.alert(
-      isSaved ? 'Removed from Saved' : 'Added to Saved', 
-      isSaved ? 'This hairstyle has been removed from your saved list.' : 'This hairstyle has been added to your saved list.'
+      isSaved ? 'Хадгалсанаас хасагдлаа' : 'Хадгалагдлаа', 
+      isSaved ? 'Энэ үсний загвар таны хадгалсан жагсаалтаас хасагдлаа.' : 'Энэ үсний загвар таны хадгалсан жагсаалтад нэмэгдлээ.'
     );
   };
   
   const shareHairstyle = () => {
     // In a real app, this would open a share dialog
-    Alert.alert('Share', 'Sharing functionality would be implemented here.');
+    Alert.alert('Хуваалцах', 'Хуваалцах функцийг энд хэрэгжүүлнэ.');
   };
   
   if (!hairstyle) {
     return (
       <View style={styles.loadingContainer}>
-        <Stack.Screen options={{ title: 'Loading...' }} />
+        <Stack.Screen options={{ title: 'Ачааллаж байна...' }} />
         <ActivityIndicator size="large" color={ModernColors.primary} />
-        <Text style={styles.loadingText}>Loading hairstyle details...</Text>
+        <Text style={styles.loadingText}>Үсний загварын мэдээлэл ачааллаж байна...</Text>
       </View>
     );
   }
@@ -172,41 +172,41 @@ export default function HairstyleDetailsScreen() {
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.faceShape}>Best for {hairstyle.faceShape} face shape</Text>
+          <Text style={styles.faceShape}>{hairstyle.faceShape} хэлбэрийн нүүрэнд тохиромжтой</Text>
           
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Difficulty</Text>
+              <Text style={styles.statLabel}>Хүндрэл</Text>
               <Text style={styles.statValue}>{hairstyle.difficulty}</Text>
             </View>
             <View style={[styles.statItem, styles.statItemBorder]}>
-              <Text style={styles.statLabel}>Maintenance</Text>
+              <Text style={styles.statLabel}>Арчлалт</Text>
               <Text style={styles.statValue}>{hairstyle.maintenance}</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Hair Type</Text>
+              <Text style={styles.statLabel}>Үсний төрөл</Text>
               <Text style={styles.statValue}>{hairstyle.idealHairType}</Text>
             </View>
           </View>
           
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.sectionTitle}>Тайлбар</Text>
             <Text style={styles.description}>{hairstyle.longDescription}</Text>
           </View>
           
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Stylist Recommendation</Text>
+            <Text style={styles.sectionTitle}>Үс засагчийн зөвлөмж</Text>
             <View style={styles.stylistCard}>
               <Ionicons name="person-circle-outline" size={32} color={ModernColors.primary} />
               <View style={styles.stylistInfo}>
                 <Text style={styles.stylistName}>{hairstyle.stylist}</Text>
-                <Text style={styles.salonName}>{hairstyle.salon}</Text>
+                <Text style={styles.stylistSalon}>{hairstyle.salon}</Text>
               </View>
             </View>
           </View>
           
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Tags</Text>
+            <Text style={styles.sectionTitle}>Шошго</Text>
             <View style={styles.tagsContainer}>
               {hairstyle.tags.map((tag, index) => (
                 <View key={index} style={styles.tag}>
@@ -216,11 +216,28 @@ export default function HairstyleDetailsScreen() {
             </View>
           </View>
           
-          <TouchableOpacity 
-            style={styles.findStylistButton}
-            onPress={() => Alert.alert('Find Stylist', 'This would connect you with a hairstylist who specializes in this style.')}
-          >
-            <Text style={styles.findStylistButtonText}>Find a Stylist</Text>
+          <View style={styles.ratingSection}>
+            <View style={styles.ratingCard}>
+              <Text style={styles.popularityLabel}>Эрэлт хэрэгцээ</Text>
+              <View style={styles.popularityRow}>
+                <Text style={styles.popularityScore}>{hairstyle.popularityScore}</Text>
+                <View style={styles.starsContainer}>
+                  {[1, 2, 3, 4, 5].map((_, i) => (
+                    <Ionicons 
+                      key={i}
+                      name={i < Math.floor(hairstyle.popularityScore) ? "star" : i < hairstyle.popularityScore ? "star-half" : "star-outline"} 
+                      size={20} 
+                      color={ModernColors.warning} 
+                      style={styles.starIcon}
+                    />
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+          
+          <TouchableOpacity style={styles.bookButton}>
+            <Text style={styles.bookButtonText}>Үс засах цаг авах</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -345,7 +362,7 @@ const styles = StyleSheet.create({
     color: ModernColors.text.primary,
     marginBottom: 4,
   },
-  salonName: {
+  stylistSalon: {
     fontSize: 14,
     color: ModernColors.text.secondary,
   },
@@ -366,7 +383,37 @@ const styles = StyleSheet.create({
     color: ModernColors.primary,
     fontWeight: '500',
   },
-  findStylistButton: {
+  ratingSection: {
+    marginBottom: 28,
+  },
+  ratingCard: {
+    backgroundColor: ModernColors.background.tertiary,
+    padding: 16,
+    borderRadius: 12,
+  },
+  popularityLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: ModernColors.text.primary,
+    marginBottom: 12,
+  },
+  popularityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  popularityScore: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: ModernColors.text.primary,
+    marginRight: 12,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+  },
+  starIcon: {
+    marginRight: 4,
+  },
+  bookButton: {
     backgroundColor: ModernColors.primary,
     paddingVertical: 16,
     borderRadius: 12,
@@ -379,7 +426,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  findStylistButtonText: {
+  bookButtonText: {
     color: ModernColors.text.inverse,
     fontSize: 16,
     fontWeight: '600',

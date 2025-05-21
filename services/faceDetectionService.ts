@@ -112,14 +112,14 @@ export async function getHairstyleSuggestions(
           messages: [
             {
               role: "system",
-              content: "You are a professional hairstylist with expertise in recommending hairstyles based on face shapes. Your responses should be formatted in well-structured Markdown and written in Mongolian language. For each hairstyle suggestion, include: 1) a clear title with the hairstyle name, 2) a detailed description explaining why it works for the face shape, and 3) use proper Markdown formatting with headings, bullet points and emphasis where appropriate."
+              content: "Та мэргэжлийн үс засч бөгөөд хүний нүүрний хэлбэр, онцлог шинж, одоогийн үсний загвар болон нийт төрхийг шинжлэн дүгнэж тохирох үсний загваруудыг санал болгодог мэргэжилтэн юм. Хүний зургийг дүн шинжилгээ хийхдээ дараах алхмуудыг дага: 1) Эхлээд хүйс (эрэгтэй/эмэгтэй/бусад)-ийг тодорхойл, 2) Өгөгдсөн нүүрний хэлбэрийг баталгаажуул болон тайлбарла, 3) Одоогийн үсний хэв маяг, урт, бүтэц болон өнгийг дүрсэл, 4) Зураг дээрх хүний нас, төрх, хувцаслалт зэргээс хамаарч тохирох 5 үсний загварыг санал болго. Үсний загвар бүрийн хувьд: а) Тодорхой нэр, б) Яагаад тохирох талаарх дэлгэрэнгүй тайлбар, в) Зөв Markdown форматтай хариултыг бэлтгэ. Хүйс, нүүрний хэлбэр, үсний төрөл, бүтэц, нүүрний онцлог, одоогийн хэв маяг зэрэг хүчин зүйлсийг харгалзан үзээрэй. Бүх хариултууд сайн бүтэцтэй Markdown хэлбэрээр, Монгол хэл дээр бичигдсэн байх ёстой."
             },
             {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text: `Based on this person's face, which I've determined is likely a ${faceShape} shape, suggest 5 hairstyles that would complement their face shape. For each hairstyle, provide a name and a brief description of why it works well for their face shape. Respond entirely in Mongolian language and format your response with Markdown.`
+                  text: `Энэ хүний нүүрний хэлбэр ${faceShape} гэж тодорхойлогдсон. Энэ хүний зургийг сайтар анализ хийгээд ${faceShape} нүүрний хэлбэртэй хүнд тохирох 5 үсний загварыг санал болгоно уу. Загвар бүрд тайлбар бичиж өгнө үү. Яагаад энэ загвар тухайн хүний нүүрний хэлбэр, үсний төрөл/бүтэц, болон нийт төрхөд тохирох талаар тайлбарлана уу. Монгол хэл дээр хариулж, Markdown форматыг ашиглана уу.`
                 },
                 {
                   type: "image_url",
@@ -167,7 +167,7 @@ export async function getHairstyleSuggestions(
           hairstylesToProcess.map(async (hairstyle: any, index: number) => {
             try {
               // Create detailed personalized prompts for each hairstyle
-              const dallePrompt = `Create a professional salon portrait photograph showing a person with a ${faceShape} face shape featuring the hairstyle: "${hairstyle.name}". The image should be a clear view of a person with this exact hairstyle, showing how it complements a ${faceShape} face shape. Style: high-end salon photography, neutral studio background, high-quality professional lighting, photorealistic. Show the complete hairstyle with excellent detail.`;
+              const dallePrompt = `Create a professional salon portrait photograph showing a ${textSuggestions.gender || 'person'} with a ${faceShape} face shape featuring the hairstyle: "${hairstyle.name}". The image should be a clear view of a ${textSuggestions.gender || 'person'} with this exact hairstyle, showing how it complements a ${faceShape} face shape. Style: high-end salon photography, neutral studio background, high-quality professional lighting, photorealistic. Show the complete hairstyle with excellent detail. The person should match the demographics shown in the reference image.`;
               
               // Try up to 2 times to generate the image
               let imageUrl = null;
@@ -250,6 +250,19 @@ function processOpenAIResponse(response: any, faceShape: FaceShape): any {
       return getMockHairstyleSuggestions(faceShape);
     }
 
+    // Determine gender - look for gender mention in the beginning of the response
+    let gender = 'person';
+    const genderMatch = message.match(/(?:эрэгтэй|эмэгтэй|эр|эм|male|female|man|woman)/i);
+    if (genderMatch) {
+      const genderWord = genderMatch[0].toLowerCase();
+      if (genderWord.includes('эрэгтэй') || genderWord.includes('эр') || genderWord.includes('male') || genderWord.includes('man')) {
+        gender = 'male';
+      } else if (genderWord.includes('эмэгтэй') || genderWord.includes('эм') || genderWord.includes('female') || genderWord.includes('woman')) {
+        gender = 'female';
+      }
+      console.log('[DEBUG] Detected gender:', gender);
+    }
+
     // Try to parse the Markdown response
     try {
       console.log('[DEBUG] Processing Markdown response');
@@ -314,7 +327,8 @@ function processOpenAIResponse(response: any, faceShape: FaceShape): any {
           faceShape: faceShape.charAt(0).toUpperCase() + faceShape.slice(1),
           description: description,
           markdownContent: message, // Store the full Markdown content
-          hairstyles
+          hairstyles,
+          gender: gender // Add gender for use in DALL-E prompts
         };
       }
     } catch (parseError) {
@@ -553,4 +567,297 @@ function getMockHairstyleSuggestions(faceShape: FaceShape) {
   };
   
   return suggestionsByFaceShape[faceShape] || suggestionsByFaceShape.oval;
+}
+
+// Direct hairstyle suggestion using GPT-4o vision capabilities without face detection
+export async function getDirectHairstyleSuggestions(imageBase64: string): Promise<any> {
+  console.log('[DEBUG] Getting direct hairstyle suggestions with GPT-4o');
+  console.log('[DEBUG] Image base64 length:', imageBase64.length);
+
+  try {
+    // Get OpenAI API key from environment variables
+    const OPENAI_API_KEY = ENV.OPENAI_API_KEY;
+    
+    console.log('[DEBUG] API Key available:', !!OPENAI_API_KEY);
+    
+    if (!OPENAI_API_KEY) {
+      console.warn('[DEBUG] OpenAI API key not found, returning mock data');
+      return getMockDirectHairstyleSuggestions();
+    }
+    
+    console.log('[DEBUG] Preparing API request to OpenAI for direct analysis...');
+    
+    try {
+      // Use GPT-4o to analyze the image and suggest hairstyles directly
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "Та мэргэжлийн үс засч бөгөөд хүний нүүрний хэлбэр, онцлог шинж, одоогийн үсний загвар болон нийт төрхийг шинжлэн дүгнэж тохирох үсний загваруудыг санал болгодог мэргэжилтэн юм. Хүний зургийг дүн шинжилгээ хийхдээ дараах алхмуудыг дага: 1) Эхлээд хүйс (эрэгтэй/эмэгтэй/бусад)-ийг тодорхойл, 2) Нүүрний хэлбэрийг тодорхойл (зууван, дугуй, дөрвөлжин, зүрх хэлбэртэй гэх мэт), 3) Одоогийн үсний хэв маяг, урт, бүтэц болон өнгийг дүрсэл, 4) Зураг дээрх хүний нас, төрх, хувцаслалт зэргээс хамаарч тохирох 5 үсний загварыг санал болго. Үсний загвар бүрийн хувьд: а) Тодорхой нэр, б) Яагаад тохирох талаарх дэлгэрэнгүй тайлбар, в) Зөв Markdown форматтай хариултыг бэлтгэ. Хүйс, нүүрний хэлбэр, үсний төрөл, бүтэц, нүүрний онцлог, одоогийн хэв маяг зэрэг хүчин зүйлсийг харгалзан үзээрэй. Бүх хариултууд сайн бүтэцтэй Markdown хэлбэрээр, Монгол хэл дээр бичигдсэн байх ёстой."
+            },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Миний төрхөд тохирох үсний загваруудыг санал болгоно уу. Миний зургийг анализ хийгээд надад тохирох 5 үсний загварыг санал болгоно уу. Загвар бүрд тайлбар бичиж өгнө үү. Яагаад энэ загвар миний нүүрний хэлбэр, үсний төрөл/бүтэц, болон нийт төрхөд тохирох талаар тайлбарлана уу. Монгол хэл дээр хариулж, Markdown форматыг ашиглана уу."
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: `data:image/jpeg;base64,${imageBase64}`
+                  }
+                }
+              ]
+            }
+          ],
+          max_tokens: 1500
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
+          }
+        }
+      );
+      
+      console.log('[DEBUG] GPT-4o API response received:', response.status);
+      
+      // Process the response
+      const textSuggestions = processGPT4oResponse(response.data);
+      
+      // Generate hairstyle images with DALL-E
+      if (textSuggestions && textSuggestions.hairstyles && textSuggestions.hairstyles.length > 0) {
+        console.log('[DEBUG] Generating custom hairstyle images with DALL-E 3');
+        
+        // Ensure we have exactly 5 hairstyles
+        const hairstylesToProcess = textSuggestions.hairstyles.slice(0, 5);
+        while (hairstylesToProcess.length < 5) {
+          // Add placeholders if we have fewer than 5 suggestions
+          hairstylesToProcess.push({
+            name: `Additional Hairstyle ${hairstylesToProcess.length + 1}`,
+            description: `A complementary hairstyle for your features.`,
+            imageUrl: `https://i.imgur.com/example${hairstylesToProcess.length + 20}.jpg`
+          });
+        }
+        
+        // Process hairstyles in parallel
+        const hairstylesWithImages = await Promise.all(
+          hairstylesToProcess.map(async (hairstyle: any, index: number) => {
+            try {
+              // Create detailed personalized prompts for each hairstyle
+              const dallePrompt = `Create a professional salon portrait photograph showing a ${textSuggestions.gender || 'person'} with the hairstyle: "${hairstyle.name}". The image should be a clear view of a ${textSuggestions.gender || 'person'} with this exact hairstyle from a front-facing angle. Style: high-end salon photography, neutral studio background, high-quality professional lighting, photorealistic. Show the complete hairstyle with excellent detail. Make the hairstyle the main focus of the image. The person should match the demographics shown in the reference image.`;
+              
+              // Try up to 2 times to generate the image
+              let imageUrl = null;
+              let attempts = 0;
+              
+              while (!imageUrl && attempts < 2) {
+                attempts++;
+                console.log(`[DEBUG] Generating image for hairstyle ${index + 1}, attempt ${attempts}`);
+                
+                try {
+                  imageUrl = await generateHairstyleImage(dallePrompt, imageBase64, OPENAI_API_KEY);
+                  if (imageUrl) {
+                    console.log(`[DEBUG] Successfully generated image for hairstyle ${index + 1}`);
+                  }
+                } catch (genError) {
+                  console.error(`[DEBUG] Error on attempt ${attempts} for hairstyle ${index + 1}:`, genError);
+                  // Short pause before retry
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              }
+              
+              // Update hairstyle with custom image if available
+              if (imageUrl) {
+                console.log(`[DEBUG] Applying generated image URL for hairstyle ${index + 1}`);
+                return { ...hairstyle, imageUrl, isAiGenerated: true };
+              } else {
+                console.log(`[DEBUG] Using fallback image for hairstyle ${index + 1}`);
+                return { 
+                  ...hairstyle, 
+                  imageUrl: `https://i.imgur.com/example${index + 16}.jpg`,
+                  isAiGenerated: false
+                };
+              }
+            } catch (imageError) {
+              console.error(`[DEBUG] Error handling image for hairstyle ${index + 1}:`, imageError);
+              return { 
+                ...hairstyle, 
+                imageUrl: `https://i.imgur.com/example${index + 16}.jpg`,
+                isAiGenerated: false 
+              };
+            }
+          })
+        );
+        
+        // Update suggestions with the generated images
+        textSuggestions.hairstyles = hairstylesWithImages;
+        console.log('[DEBUG] Generated images for all hairstyles:', 
+          hairstylesWithImages.map(h => h.isAiGenerated ? 'DALL-E' : 'Fallback').join(', ')
+        );
+      }
+      
+      return textSuggestions;
+    } catch (apiError: any) {
+      console.error('[DEBUG] OpenAI API error:', apiError.message);
+      if (apiError.response) {
+        console.error('[DEBUG] Error status:', apiError.response.status);
+        console.error('[DEBUG] Error data:', JSON.stringify(apiError.response.data));
+      }
+      
+      console.log('[DEBUG] Falling back to mock data due to API error');
+      return getMockDirectHairstyleSuggestions();
+    }
+  } catch (error: any) {
+    console.error('[DEBUG] General error getting direct hairstyle suggestions:', error.message);
+    console.log('[DEBUG] Falling back to mock data due to general error');
+    return getMockDirectHairstyleSuggestions();
+  }
+}
+
+// Function to process the GPT-4o response for direct hairstyle suggestions
+function processGPT4oResponse(response: any): any {
+  console.log('[DEBUG] Processing GPT-4o direct analysis response');
+  try {
+    // Extract the text content from the response
+    const message = response.choices[0]?.message?.content;
+    console.log('[DEBUG] Extracted message from GPT-4o:', message ? message.substring(0, 100) + '...' : 'None');
+    
+    if (!message) {
+      console.log('[DEBUG] No message content in response, using mock data');
+      return getMockDirectHairstyleSuggestions();
+    }
+
+    // Determine gender - look for gender mention in the beginning of the response
+    let gender = 'person';
+    const genderMatch = message.match(/(?:эрэгтэй|эмэгтэй|эр|эм|male|female|man|woman)/i);
+    if (genderMatch) {
+      const genderWord = genderMatch[0].toLowerCase();
+      if (genderWord.includes('эрэгтэй') || genderWord.includes('эр') || genderWord.includes('male') || genderWord.includes('man')) {
+        gender = 'male';
+      } else if (genderWord.includes('эмэгтэй') || genderWord.includes('эм') || genderWord.includes('female') || genderWord.includes('woman')) {
+        gender = 'female';
+      }
+      console.log('[DEBUG] Detected gender:', gender);
+    }
+
+    // Try to parse the Markdown response
+    try {
+      console.log('[DEBUG] Processing Markdown response');
+      
+      // Extract hairstyle sections using Markdown headers
+      const hairstyles = [];
+      
+      // Look for Markdown headers (##, ###, or numbered lists)
+      const sections = message.split(/(?:^|\n)(?:#{2,3}|\d+\.)\s+/g).filter(Boolean);
+      
+      if (sections.length >= 2) {
+        // First section is usually an introduction
+        const introduction = sections[0].trim();
+        
+        // Process the remaining sections as hairstyles
+        for (let i = 1; i < Math.min(sections.length, 6); i++) {
+          const section = sections[i].trim();
+          const lines = section.split('\n').filter(Boolean);
+          
+          if (lines.length > 0) {
+            const name = lines[0].replace(/[*_#]/g, '').trim();
+            const description = lines.slice(1).join('\n').trim();
+            
+            if (name && description) {
+              hairstyles.push({
+                name,
+                description,
+                imageUrl: `https://i.imgur.com/example${i+15}.jpg` // Use mock images initially
+              });
+            }
+          }
+        }
+      } else {
+        // Alternative approach: Try to parse numbered lists
+        const listItemPattern = /(\d+\.|[*\-•])\s+([^:\n]+):?\s*([^]*?)(?=(?:\d+\.|[*\-•])\s+|\n\n|$)/g;
+        let match;
+        
+        while ((match = listItemPattern.exec(message)) !== null) {
+          const name = match[2].replace(/[*_#]/g, '').trim();
+          const description = match[3].trim();
+          
+          if (name && description) {
+            hairstyles.push({
+              name,
+              description,
+              imageUrl: `https://i.imgur.com/example${hairstyles.length + 16}.jpg` // Use mock images initially
+            });
+          }
+        }
+      }
+      
+      if (hairstyles.length > 0) {
+        console.log('[DEBUG] Extracted', hairstyles.length, 'hairstyles from Markdown');
+        
+        // Extract a description from the first part of the message
+        const descriptionMatch = message.match(/^[^#\d*\-•]+/);
+        const description = descriptionMatch 
+          ? descriptionMatch[0].trim() 
+          : `Танд зориулсан үсний загварууд`;
+        
+        return {
+          faceShape: "Custom", // No specific face shape for direct analysis
+          description: description,
+          markdownContent: message, // Store the full Markdown content
+          hairstyles,
+          gender: gender // Add gender for use in DALL-E prompts
+        };
+      }
+    } catch (parseError) {
+      console.error('[DEBUG] Error parsing Markdown response:', parseError);
+    }
+    
+    // Fallback to mock data if parsing fails
+    console.log('[DEBUG] Falling back to mock data due to parsing failure');
+    return getMockDirectHairstyleSuggestions();
+  } catch (error) {
+    console.error('[DEBUG] Error processing GPT-4o response:', error);
+    return getMockDirectHairstyleSuggestions(); // Fallback
+  }
+}
+
+// Mock data for direct hairstyle suggestions
+function getMockDirectHairstyleSuggestions() {
+  return {
+    faceShape: "Custom",
+    description: "Таны зурагт үндэслэн хийсэн анализаар танд тохирох үсний загваруудыг санал болгож байна:",
+    hairstyles: [
+      {
+        name: 'Орчин үеийн текстурт боб',
+        description: 'Текстурт боб үс таны нүүрийг гоёмсгоор хүрээлэн, үсэнд хөдөлгөөн болон хэмжээс нэмнэ. Текстурт давхарга нь орчин үеийн, хялбар загвар бөгөөд хялбархан засаж болно.',
+        imageUrl: 'https://i.imgur.com/example1.jpg'
+      },
+      {
+        name: 'Зөөлөн хөшиг баналтай үс',
+        description: 'Хөшиг баналт нь таны нүүрийг зөөлөн хүрээлж, төрхийг чинь тодотгоно. Энэ нь олон янзаар хэлбэржүүлж болох уян хатан загвар бөгөөд орчин үеийн харагдах төрхийг бий болгоно.',
+        imageUrl: 'https://i.imgur.com/example2.jpg'
+      },
+      {
+        name: 'Давхарласан дунд урттай үс',
+        description: 'Дунд урттай үсэнд нүүрийг хүрээлсэн үсний давхаргууд нь таны төрхийг тодруулж, шулуун болон давлагаатай гэх мэт янз бүрийн загварчлалын боломжийг олгодог.',
+        imageUrl: 'https://i.imgur.com/example3.jpg'
+      },
+      {
+        name: 'Дээд хэсэгтээ урт текстурт пикси',
+        description: 'Дээд хэсэгтээ нэмэлт уртай пикси үс таны нүүрний бүтцийг онцлон харуулж, орчин үеийн төрхийг бий болгоно. Энэ нь арчлахад хялбар боловч загварлаг харагдана.',
+        imageUrl: 'https://i.imgur.com/example4.jpg'
+      },
+      {
+        name: 'Зөөлөн долгионтой лоб',
+        description: 'Урт боб буюу лоб үс дээр зөөлөн долгион нь таны үсэнд хөдөлгөөн, хэмжээс нэмж, нүүрийг тань гоёмсгоор хүрээлнэ. Энэхүү олон талт загвар нь өдөр тутмын болон албан ёсны арга хэмжээнд тохиромжтой.',
+        imageUrl: 'https://i.imgur.com/example5.jpg'
+      }
+    ],
+    gender: 'female' // Default to female for the mock data
+  };
 } 

@@ -90,7 +90,7 @@ export default function FaceShapeResult({ imageUri, results, onHairstylePress }:
         
         {item.isAiGenerated && (
           <View style={styles.aiGeneratedBadge}>
-            <Text style={styles.aiGeneratedText}>AI Generated</Text>
+            <Text style={styles.aiGeneratedText}>AI Үүсгэсэн</Text>
           </View>
         )}
       </View>
@@ -108,7 +108,7 @@ export default function FaceShapeResult({ imageUri, results, onHairstylePress }:
             />
           </View>
           <View style={styles.faceShapeContainer}>
-            <Text style={styles.faceShapeLabel}>Your Face Shape</Text>
+            <Text style={styles.faceShapeLabel}>Таны нүүрний хэлбэр</Text>
             <Text style={styles.faceShapeValue}>{results.faceShape}</Text>
             <Text style={styles.faceShapeDescription}>{results.description}</Text>
           </View>
@@ -117,7 +117,7 @@ export default function FaceShapeResult({ imageUri, results, onHairstylePress }:
 
       {results.markdownContent && (
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>AI Analysis</Text>
+          <Text style={styles.sectionTitle}>AI Дүн шинжилгээ</Text>
           
           <View style={styles.analysisCard}>
             {renderFormattedText(results.markdownContent)}
@@ -126,9 +126,9 @@ export default function FaceShapeResult({ imageUri, results, onHairstylePress }:
       )}
       
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Recommended Hairstyles</Text>
+        <Text style={styles.sectionTitle}>Санал болгох үсний загварууд</Text>
         <Text style={styles.sectionSubtitle}>
-          for {results.faceShape.toLowerCase()} face shape
+          {results.faceShape.toLowerCase()} нүүрний хэлбэрт тохирсон
         </Text>
         
         <FlatList
@@ -148,28 +148,28 @@ export default function FaceShapeResult({ imageUri, results, onHairstylePress }:
             <View style={styles.featureIconContainer}>
               <Ionicons name="thumbs-up" size={20} color={ModernColors.text.inverse} />
             </View>
-            <Text style={styles.featureText}>Matches your face shape</Text>
+            <Text style={styles.featureText}>Таны нүүрний хэлбэрт тохирсон</Text>
           </View>
           
           <View style={styles.featureItem}>
             <View style={styles.featureIconContainer}>
               <Ionicons name="cut" size={20} color={ModernColors.text.inverse} />
             </View>
-            <Text style={styles.featureText}>Stylist verified</Text>
+            <Text style={styles.featureText}>Мэргэжлийн үс засагчаас баталгаажсан</Text>
           </View>
           
           <View style={styles.featureItem}>
             <View style={styles.featureIconContainer}>
               <Ionicons name="trending-up" size={20} color={ModernColors.text.inverse} />
             </View>
-            <Text style={styles.featureText}>Currently trending</Text>
+            <Text style={styles.featureText}>Одоогийн трэнд</Text>
           </View>
         </View>
       </View>
       
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          Recommendations based on AI facial analysis
+          AI нүүрний дүн шинжилгээнд үндэслэн санал болгосон
         </Text>
       </View>
     </ScrollView>

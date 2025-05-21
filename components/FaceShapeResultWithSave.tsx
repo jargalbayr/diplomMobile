@@ -46,14 +46,14 @@ export default function FaceShapeResultWithSave({
       
       setIsSaved(true);
       Alert.alert(
-        'Success',
-        'Your face analysis and hairstyle suggestions have been saved! You can access them anytime from the Saved tab.'
+        'Амжилттай',
+        'Таны нүүрний дүн шинжилгээ болон үсний загварын саналууд хадгалагдлаа! Та "Хадгалсан" хэсгээс дурын үед харах боломжтой.'
       );
     } catch (error) {
       console.error('Error saving face analysis:', error);
       Alert.alert(
-        'Error',
-        'Failed to save your face analysis. Please try again.'
+        'Алдаа',
+        'Таны нүүрний дүн шинжилгээг хадгалж чадсангүй. Дахин оролдоно уу.'
       );
     } finally {
       setIsSaving(false);
@@ -75,11 +75,11 @@ export default function FaceShapeResultWithSave({
             disabled={isSaving}
           >
             {isSaving ? (
-              <Text style={styles.saveButtonText}>Saving...</Text>
+              <Text style={styles.saveButtonText}>Хадгалж байна...</Text>
             ) : (
               <>
                 <Ionicons name="save-outline" size={18} color={ModernColors.text.inverse} style={styles.saveIcon} />
-                <Text style={styles.saveButtonText}>Save Analysis</Text>
+                <Text style={styles.saveButtonText}>Дүн шинжилгээ хадгалах</Text>
               </>
             )}
           </TouchableOpacity>
@@ -90,7 +90,7 @@ export default function FaceShapeResultWithSave({
               onPress={() => router.push('/saved')}
             >
               <Ionicons name="images-outline" size={18} color={ModernColors.text.inverse} style={styles.saveIcon} />
-              <Text style={styles.saveButtonText}>View Saved</Text>
+              <Text style={styles.saveButtonText}>Хадгалсныг харах</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -98,7 +98,7 @@ export default function FaceShapeResultWithSave({
               onPress={() => router.push('/')}
             >
               <Ionicons name="refresh-outline" size={18} color={ModernColors.primary} style={styles.saveIcon} />
-              <Text style={styles.newAnalysisText}>New Analysis</Text>
+              <Text style={styles.newAnalysisText}>Шинэ дүн шинжилгээ</Text>
             </TouchableOpacity>
           </View>
         )}

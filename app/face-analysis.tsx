@@ -21,6 +21,7 @@ export default function FaceAnalysisScreen() {
   const router = useRouter();
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
 
   useEffect(() => {
     if (mode === 'camera' || mode === 'gallery') {
@@ -76,7 +77,7 @@ export default function FaceAnalysisScreen() {
       }
     } catch (err) {
       console.error("Image picker error:", err);
-      Alert.alert("Error", "Could not access your photos. Please try again.");
+      Alert.alert("Алдаа", "Таны зургийг хандах боломжгүй байна. Дахин оролдоно уу.");
       router.back();
     }
   };
@@ -85,6 +86,8 @@ export default function FaceAnalysisScreen() {
     if (!image) return;
     
     setLoading(true);
+    setLoadingMessage('Таны зургийг үнэлж байна...');
+    
     try {
       // Verify the image exists before proceeding
       const fileInfo = await FileSystem.getInfoAsync(image);
@@ -92,16 +95,34 @@ export default function FaceAnalysisScreen() {
         throw new Error('Image file not found');
       }
       
-      // Navigate to results
+      // Convert image to base64 for API calls
+      setLoadingMessage('Зургийг анализд бэлтгэж байна...');
+      let base64Image;
+      try {
+        base64Image = await FileSystem.readAsStringAsync(image, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      } catch (error) {
+        console.error('[DEBUG] Error reading image as base64:', error);
+        throw new Error('Failed to prepare image for analysis');
+      }
+      
+      // Navigate to results with the image
+      // The hairstyle suggestions will be generated directly in the results page
+      // with GPT-4o analyzing the full photo
       router.push({
         pathname: '/hairstyle-results',
-        params: { imageUri: image }
+        params: { 
+          imageUri: image,
+          directGptAnalysis: 'true' // Flag to indicate we're using direct GPT-4o analysis without face shape detection
+        }
       });
     } catch (error) {
       console.error('[DEBUG] Error analyzing image:', error);
-      Alert.alert('Error', 'Failed to process image. Please try another photo.');
+      Alert.alert('Алдаа', 'Зургийг боловсруулж чадсангүй. Өөр зураг оруулна уу.');
     } finally {
       setLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -109,7 +130,7 @@ export default function FaceAnalysisScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Face Analysis</Text>
+        <Text style={styles.headerTitle}>Үсний загварын санал</Text>
       </View>
       
       <View style={styles.imagePreviewContainer}>
@@ -122,7 +143,7 @@ export default function FaceAnalysisScreen() {
               />
             </View>
             <Text style={styles.helperText}>
-              Make sure your face is clearly visible in the image
+              Өөрийн тань зурагт үндэслэн танд тохирсон үсний загваруудыг санал болгоно
             </Text>
             <View style={styles.actionButtons}>
               <TouchableOpacity 
@@ -133,7 +154,7 @@ export default function FaceAnalysisScreen() {
                 }}
               >
                 <Text style={[styles.buttonText, styles.secondaryButtonText]}>
-                  Try Again
+                  Дахин оролдох
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity 
@@ -145,11 +166,14 @@ export default function FaceAnalysisScreen() {
                   <ActivityIndicator color={ModernColors.text.inverse} />
                 ) : (
                   <Text style={styles.buttonText}>
-                    Analyze Face
+                    Үсний загвар санал болгох
                   </Text>
                 )}
               </TouchableOpacity>
             </View>
+            {loading && loadingMessage ? (
+              <Text style={styles.loadingMessage}>{loadingMessage}</Text>
+            ) : null}
           </>
         ) : (
           <View style={styles.emptyStateContainer}>
@@ -258,5 +282,11 @@ const styles = StyleSheet.create({
   loadingText: {
     color: ModernColors.text.secondary,
     fontSize: 16,
+  },
+  loadingMessage: {
+    marginTop: 16,
+    color: ModernColors.text.tertiary,
+    fontSize: 14,
+    textAlign: 'center',
   },
 }); 

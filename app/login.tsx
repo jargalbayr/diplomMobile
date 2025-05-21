@@ -51,12 +51,12 @@ export default function LoginScreen() {
 
   const handleAuth = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password.');
+      Alert.alert('Алдаа', 'И-мэйл болон нууц үгээ оруулна уу.');
       return;
     }
 
     if (!isLogin && !name) {
-      Alert.alert('Error', 'Please enter your name to register.');
+      Alert.alert('Алдаа', 'Бүртгүүлэхийн тулд нэрээ оруулна уу.');
       return;
     }
 
@@ -74,11 +74,11 @@ export default function LoginScreen() {
       if (response.success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Error', response.error || 'Authentication failed.');
+        Alert.alert('Алдаа', response.error || 'Нэвтрэх үйлдэл амжилтгүй.');
       }
     } catch (error) {
       console.error('Authentication error:', error);
-      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+      Alert.alert('Алдаа', 'Гэнэтийн алдаа гарлаа. Дахин оролдоно уу.');
     } finally {
       setLoading(false);
     }
@@ -99,11 +99,11 @@ export default function LoginScreen() {
       if (response.success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Error', response.error || 'Demo login failed.');
+        Alert.alert('Алдаа', response.error || 'Демо эрхээр нэвтрэх амжилтгүй.');
       }
     } catch (error) {
       console.error('Demo login error:', error);
-      Alert.alert('Error', 'Failed to login with demo account.');
+      Alert.alert('Алдаа', 'Демо эрхээр нэвтрэх боломжгүй байна.');
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ export default function LoginScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={ModernColors.primary} />
-        <Text style={styles.loadingText}>Initializing app...</Text>
+        <Text style={styles.loadingText}>Аппликейшн ачааллаж байна...</Text>
       </View>
     );
   }
@@ -138,14 +138,14 @@ export default function LoginScreen() {
         
         <View style={styles.formContainer}>
           <Text style={styles.formTitle}>
-            {isLogin ? 'Sign In' : 'Create Account'}
+            {isLogin ? 'Нэвтрэх' : 'Бүртгүүлэх'}
           </Text>
           
           {!isLogin && (
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
-                placeholder="Your name"
+                placeholder="Таны нэр"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -157,7 +157,7 @@ export default function LoginScreen() {
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Email address"
+              placeholder="И-мэйл хаяг"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -170,7 +170,7 @@ export default function LoginScreen() {
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder="Нууц үг"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -188,7 +188,7 @@ export default function LoginScreen() {
               <ActivityIndicator color={ModernColors.text.inverse} />
             ) : (
               <Text style={styles.primaryButtonText}>
-                {isLogin ? 'Sign In' : 'Create Account'}
+                {isLogin ? 'Нэвтрэх' : 'Бүртгүүлэх'}
               </Text>
             )}
           </TouchableOpacity>
@@ -199,8 +199,8 @@ export default function LoginScreen() {
           >
             <Text style={styles.switchText}>
               {isLogin 
-                ? "Don't have an account? Sign Up" 
-                : "Already have an account? Sign In"}
+                ? "Бүртгэлгүй юу? Бүртгүүлэх" 
+                : "Бүртгэлтэй юу? Нэвтрэх"}
             </Text>
           </TouchableOpacity>
           
@@ -209,14 +209,14 @@ export default function LoginScreen() {
             onPress={handleDemoLogin}
           >
             <Text style={styles.demoButtonText}>
-              Try Demo Account
+              Демо эрхээр нэвтрэх
             </Text>
           </TouchableOpacity>
         </View>
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            © {new Date().getFullYear()} Face Style AI
+            © {new Date().getFullYear()} Үсний загвар AI
           </Text>
         </View>
       </KeyboardAvoidingView>

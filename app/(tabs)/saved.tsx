@@ -5,10 +5,10 @@ import { SavedImage } from '@/constants/SavedImages';
 import { SavedImagesProvider } from '@/context/SavedImagesContext';
 import { useState } from 'react';
 import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    View
 } from 'react-native';
 
 export default function SavedScreen() {
@@ -26,7 +26,7 @@ export default function SavedScreen() {
     <SavedImagesProvider>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Saved Analyses</Text>
+          <Text style={styles.headerTitle}>Хадгалсан дүн шинжилгээ</Text>
         </View>
         
         {selectedImage ? (
